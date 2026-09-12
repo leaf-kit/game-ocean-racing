@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#061a2e" />
+  <title>대항해시대 레이싱 - Age of Sail Racing</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E⛵%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./src/style.css?v=20260912153205" />
+</head>
+<body>
+  <div id="app"></div>
+  <div id="rotate-hint"><div>📱↻</div><div data-i18n="mobile.rotate">가로 화면으로 돌려주세요</div></div>
+  <div id="error-banner" class="hidden"></div>
+
+  <!-- 타이틀 화면 -->
+  <!-- 입장 안내: 자동재생이 막힌 브라우저에서 첫 클릭으로 음악을 시작 -->
+  <div id="enter-gate" class="hidden">
+    <div class="gate-box">
+      <div class="gate-icon">⛵</div>
+      <div class="gate-title" data-i18n="gate.title">대항해시대 레이싱</div>
+      <div class="gate-text" data-i18n="gate.text">🔊 화면을 클릭하면 메인 테마와 함께 항해가 시작됩니다</div>
+    </div>
+  </div>
+
+  <!-- 플레이리스트 위젯 (우측 상단) -->
+  <div id="music-widget" class="hidden">
+    <button id="music-toggle" type="button">♪ <span id="music-cur">…</span> <span class="caret">▾</span></button>
+    <div id="music-list" class="hidden"><div class="ml-head" data-i18n="music.playlist">플레이리스트</div><ul id="music-items"></ul></div>
+  </div>
+
+  <!-- 상단 메뉴: 맵 바꿔 새로 시작 / 함선 선택 / 메인으로 -->
+  <div id="top-menu" class="hidden">
+    <button id="menu-toggle" type="button">☰ <span data-i18n="menu.title">메뉴</span></button>
+    <div id="top-menu-list" class="hidden">
+      <div class="ml-head" data-i18n="menu.mapRestart">🗺 맵을 바꿔 새로 시작</div>
+      <ul id="menu-maps"></ul>
+      <button id="menu-select" type="button" data-i18n="menu.select">⛵ 함선 선택으로</button>
+      <button id="menu-home" type="button" data-i18n="menu.home">🏠 메인으로</button>
+    </div>
+  </div>
+
+  <!-- 언어 선택 (타이틀/선택 화면 상단) -->
+  <div id="lang-bar"><label><span data-i18n="lang.label">언어</span> <select id="lang-select"><option value="ko">한국어</option><option value="en">English</option></select></label></div>
+
+  <div id="title-screen" class="screen">
+    <div class="title-box">
+      <div class="title-sub" data-i18n="title.sub">AGE OF SAIL</div>
+      <h1 class="title-main" data-i18n="title.main">대항해시대 레이싱</h1>
+      <p class="title-desc" data-i18n="title.desc">리스본에서 출항해 희망봉·캘리컷·나가사키·아카풀코를 거쳐 세계를 세 바퀴. 바람을 읽고, 폭풍을 뚫고, 가장 먼저 돌아오라!</p>
+      <button id="btn-start" class="btn-primary" data-i18n="title.start">출항 준비</button>
+      <div class="title-hint">
+        <span data-i18n="hint.w">W/↑ 전진</span><span data-i18n="hint.s">S/↓ 감속</span><span data-i18n="hint.ad">A/D ←/→ 조타</span>
+        <span data-i18n="hint.shift">SHIFT 연타 급가속 / 꾹 전속 항해</span><span data-i18n="hint.space">SPACE 포격</span><span data-i18n="hint.c">C 카메라</span><span data-i18n="hint.m">M 음악</span><span data-i18n="hint.esc">ESC 함선 선택</span><span data-i18n="hint.mouse">🖱/👆 누른 채 좌우 조타 · 연타 급가속</span>
+      </div>
+      <div class="title-tips">
+        <span data-i18n="tip.near">⚡ 아슬아슬하게 스치면 <b>니어미스</b></span><span data-i18n="tip.draft">🌀 앞 배 뒤에 붙으면 <b>슬립스트림</b></span><span data-i18n="tip.coin">🪙 금화·보물로 <b>콤보</b></span><span data-i18n="tip.storm">⛈ 폭풍 속 파도를 넘어라</span><span data-i18n="tip.scroll">📜 두루마리로 <b>역사 인물</b> 발견</span><span data-i18n="tip.orb">🔮 발견 구슬로 <b>오로라·해류</b> 체험</span><span data-i18n="tip.jump">🚀 점프대를 밟으면 <b>하늘을 날아</b> 초고속</span>
+      </div>
+      <div id="music-hint" class="title-music"><span data-i18n="music.label">♪ 배경음악: </span><span id="music-hint-name" data-i18n="music.checking">확인 중…</span></div>
+    </div>
+  </div>
+
+  <!-- 배 선택 화면 -->
+  <div id="select-screen" class="screen hidden">
+    <h2 class="select-title" data-i18n="select.title">함선을 선택하세요</h2>
+    <div id="portrait-bar">
+      <div class="portrait-head"><span data-i18n="select.portrait">제독 초상</span><small data-i18n="select.portraitHint">초상을 고르면 이름 칸이 비어 있을 때 그 이름이 채워집니다</small></div>
+      <div id="portrait-row"></div>
+    </div>
+    <div id="ship-cards" class="ship-cards"></div>
+    <div class="select-bottom">
+      <div class="option-row">
+        <label class="name-label"><span data-i18n="select.name">제독 이름</span>
+          <input id="opt-name" type="text" maxlength="12" autocomplete="off" spellcheck="false" data-i18n-placeholder="name.placeholder" placeholder="이름을 입력하세요">
+        </label>
+        <label><span data-i18n="select.map">맵</span>
+          <select id="opt-map"></select>
+        </label>
+        <label><span data-i18n="select.laps">랩 수</span>
+          <select id="opt-laps">
+            <option value="1" data-i18n="select.lap1">1랩</option>
+            <option value="2" data-i18n="select.lap2">2랩</option>
+            <option value="3" selected data-i18n="select.lap3">3랩</option>
+          </select>
+        </label>
+        <label><span data-i18n="select.diff">난이도</span>
+          <select id="opt-difficulty">
+            <option value="easy" data-i18n="diff.easy">견습 항해사</option>
+            <option value="normal" selected data-i18n="diff.normal">일등 항해사</option>
+            <option value="hard" data-i18n="diff.hard">전설의 제독</option>
+          </select>
+        </label>
+        <label><span data-i18n="select.time">시간대</span>
+          <select id="opt-time">
+            <option value="cycle" selected data-i18n="time.cycle">낮 → 석양 → 밤</option>
+            <option value="random" data-i18n="time.random">무작위(고정)</option>
+            <option value="day" data-i18n="time.day">한낮</option>
+            <option value="sunset" data-i18n="time.sunset">석양</option>
+            <option value="night" data-i18n="time.night">달밤</option>
+          </select>
+        </label>
+      </div>
+      <button id="btn-race" class="btn-primary" data-i18n="select.go">출항!</button>
+    </div>
+    <div id="map-desc"></div>
+  </div>
+
+  <!-- 레이스 HUD -->
+  <div id="hud" class="hidden">
+    <div id="hud-topleft">
+      <div id="hud-position"><span id="pos-num">6</span><span id="pos-suffix" data-i18n="hud.rank">위</span><span id="pos-total">/ 6</span></div>
+      <div id="hud-lap">LAP <span id="lap-cur">1</span>/<span id="lap-total">3</span></div>
+      <div id="hud-time">00:00.00</div>
+      <div id="score-box"><span class="score-label" data-i18n="hud.score">점수</span><span id="score-val">0</span></div>
+      <div id="combo-box" class="hidden"><span id="combo-num">×2</span><span class="combo-label" data-i18n="hud.combo">콤보</span><div id="combo-bar"><div id="combo-fill"></div></div></div>
+    </div>
+    <div id="hud-topright">
+      <div id="admiral-badge"><canvas id="admiral-portrait" width="64" height="64"></canvas><span class="admiral-anchor">⚓</span><span class="admiral-title" data-i18n="hud.admiral">제독</span><span id="admiral-name"></span><span id="admiral-ship"></span></div>
+      <div id="wind-compass">
+        <div class="compass-ring">
+          <span class="c-n">N</span><span class="c-e">E</span><span class="c-s">S</span><span class="c-w">W</span>
+          <div id="wind-arrow"></div>
+          <div id="ship-marker"></div>
+        </div>
+        <div id="wind-label" data-i18n="hud.wind">바람 <span id="wind-strength">0</span>노트</div>
+      </div>
+      <!-- 연대기 / 인물 / 발견 카드 -->
+      <div id="knowledge-card" class="hidden">
+        <div class="kc-kind" id="kc-kind">연대기</div>
+        <div class="kc-date" id="kc-date"></div>
+        <div class="kc-title" id="kc-title"></div>
+        <div class="kc-text" id="kc-text"></div>
+        <div class="kc-bar"><div id="kc-fill"></div></div>
+      </div>
+      <!-- 기항지 카드: 세계지도 + 역사 해설 -->
+      <div id="port-card" class="hidden">
+        <canvas id="world-map" width="320" height="170"></canvas>
+        <div class="port-text">
+          <div id="port-lap"></div>
+          <div class="port-head"><span id="port-name"></span><span id="port-year"></span></div>
+          <div id="port-fact"></div>
+        </div>
+      </div>
+    </div>
+    <div id="hud-bottomleft">
+      <div id="speed-box"><span id="speed-val">0</span><span class="unit" data-i18n="hud.knots">노트</span></div>
+      <div id="wind-effect">순풍 +0%</div>
+    </div>
+    <div id="hud-bottomright">
+      <div class="gauge-label" id="tap-label" data-i18n="hud.tap">연타 부스트 · <b>SHIFT 연타</b></div>
+      <div id="tap-bar"><div id="tap-fill"></div></div>
+      <div class="gauge-label" data-i18n="hud.boost">전속 항해 · SHIFT 꾹</div>
+      <div id="boost-bar"><div id="boost-fill"></div></div>
+      <div class="gauge-label" data-i18n="hud.cannon">포격 (SPACE)</div>
+      <div class="gauge-row"><div id="cannon-bar"><div id="cannon-fill"></div></div><button id="btn-fire" type="button" data-i18n="hud.fireBtn">💣 포격</button></div>
+    </div>
+    <canvas id="minimap" width="220" height="220"></canvas>
+    <div id="center-msg"></div>
+    <div id="event-msg"></div>
+    <div id="combo-pop"></div>
+    <div id="draft-label" class="hidden" data-i18n="hud.draft">🌀 슬립스트림</div>
+    <div id="tap-hint" class="hidden" data-i18n="hud.tapHint">⚡ <b>SHIFT 연타</b> = 급가속 버스트 &nbsp;·&nbsp; <b>SHIFT 꾹</b> = 전속 항해</div>
+    <div id="storm-warn" class="hidden" data-i18n="hud.storm">⛈ 폭풍 접근!</div>
+    <div id="wrong-way" class="hidden" data-i18n="hud.wrongWay">⛔ 역방향! 방향을 돌리세요</div>
+    <div id="music-label"></div>
+    <div id="offcourse-warn" class="hidden" data-i18n="hud.offcourse">⚠ 항로 이탈! 항로로 복귀하세요</div>
+    <!-- 모바일 가상 조작 패드 (터치 기기에서만 표시) -->
+    <div id="touch-pad">
+      <div class="pad-left">
+        <button class="pad-btn" data-vk="left" type="button" aria-label="left">◀</button>
+        <button class="pad-btn" data-vk="right" type="button" aria-label="right">▶</button>
+      </div>
+      <div class="pad-right">
+        <button class="pad-btn pad-boost" data-vk="boost" type="button" aria-label="boost">⚡</button>
+        <button class="pad-btn pad-fire" data-vk="fire" type="button" aria-label="fire">💣</button>
+        <div class="pad-col">
+          <button class="pad-btn" data-vk="up" type="button" aria-label="forward">▲</button>
+          <button class="pad-btn" data-vk="down" type="button" aria-label="slow">▼</button>
+        </div>
+      </div>
+    </div>
+    <div id="standings"></div>
+  </div>
+
+  <!-- 결과 화면 -->
+  <div id="result-screen" class="screen hidden">
+    <div class="result-box">
+      <h2 id="result-title" data-i18n="res.end">레이스 종료</h2>
+      <div id="result-admiral"><canvas id="result-portrait" width="128" height="128"></canvas><div id="result-admiral-name"></div></div>
+      <div id="result-rank-big"></div>
+      <div id="result-score"></div>
+      <div id="result-learned"></div>
+      <table id="result-table"></table>
+      <div class="result-buttons">
+        <button id="btn-retry" class="btn-primary" data-i18n="res.retry">다시 출항</button>
+        <button id="btn-select" class="btn-secondary" data-i18n="res.select">함선 변경</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 로드 실패 안내 -->
+  <div id="load-error" class="hidden">
+    <div class="load-error-box">
+      <h2>⚠ 게임을 시작할 수 없습니다</h2>
+      <p id="load-error-msg"></p>
+      <button id="load-error-close" type="button" class="btn-secondary">닫기 / Close</button>
+      <ul>
+        <li>이 페이지는 <b>http://localhost:8000</b> 처럼 서버 주소로 열어야 합니다. (<b>file://</b>로 열면 동작하지 않습니다)</li>
+        <li>three.js를 CDN(jsdelivr.net)에서 불러오므로 <b>인터넷 연결</b>이 필요합니다.</li>
+        <li>브라우저에서 <b>WebGL(하드웨어 가속)</b>이 꺼져 있으면 실행되지 않습니다. 크롬: 설정 → 시스템 → "그래픽 가속 사용" 켜기</li>
+        <li>자세한 내용은 F12 → Console 탭을 확인하세요.</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // main.js(ES 모듈)가 로드/실행에 실패하면 버튼이 아무 반응이 없으므로 원인을 화면에 표시한다.
+    // 게임이 아직 로드되지 않았을 때만 전체 화면 안내를 띄운다. 로드된 뒤의 오류는 작은 배너로만 표시해 게임을 막지 않는다.
+    window.showLoadError = function (msg) {
+      if (window.__G) { window.showErrorBanner(msg); return; }
+      var box = document.getElementById('load-error');
+      if (!box.classList.contains('hidden')) return; // 가장 먼저 잡힌(가장 구체적인) 원인을 유지
+      document.getElementById('load-error-msg').textContent = msg || '';
+      box.classList.remove('hidden');
+    };
+    window.hideLoadError = function () { document.getElementById('load-error').classList.add('hidden'); };
+    window.showErrorBanner = function (msg) {
+      var b = document.getElementById('error-banner'); if (!b) return;
+      b.textContent = '⚠ ' + msg; b.classList.remove('hidden');
+      clearTimeout(window.__bannerT); window.__bannerT = setTimeout(function () { b.classList.add('hidden'); }, 8000);
+    };
+    document.addEventListener('DOMContentLoaded', function () {
+      document.getElementById('load-error-close').addEventListener('click', window.hideLoadError);
+    });
+    window.addEventListener('error', function (e) {
+      var msg = e.message || (e.error && e.error.message) || '';
+      if (e.target && e.target.tagName === 'SCRIPT') msg = '스크립트를 불러오지 못했습니다: ' + (e.target.src || '');
+      if (msg) window.showLoadError(msg);
+    }, true);
+    window.addEventListener('unhandledrejection', function (e) {
+      var r = e.reason; var msg = r && r.message ? r.message : String(r);
+      if (window.__G) { console.warn('unhandled rejection:', r); return; } // 로드 이후의 사소한 거부는 콘솔에만
+      window.showLoadError('스크립트 오류: ' + msg);
+    });
+    // 로딩 타임아웃: 느린 회선(three.js CDN, 음악 파일)을 감안해 30초. 그 사이 로드되면 안내는 자동으로 사라진다.
+    var __loadT = setTimeout(function () {
+      if (!window.__G) window.showLoadError('게임 스크립트(main.js)가 30초 안에 로드되지 않았습니다. 인터넷 연결(three.js CDN)과 브라우저 콘솔(F12)을 확인하세요.');
+    }, 30000);
+    var __loadWatch = setInterval(function () { if (window.__G) { clearTimeout(__loadT); clearInterval(__loadWatch); window.hideLoadError(); } }, 500);
+  </script>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module" src="./src/main.js?v=20260912153205" onerror="window.showLoadError('main.js 또는 three.js 모듈을 불러오지 못했습니다. 서버 주소(http://)로 열었는지, 인터넷이 연결되어 있는지 확인하세요.')"></script>
+</body>
+</html>
